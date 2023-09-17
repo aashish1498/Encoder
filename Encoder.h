@@ -14,6 +14,7 @@ class Encoder {
     void updateButtonState();
     void updateRotaryPosition();
     void setButtonTimes(int doublePressTime, int longPressTime);
+    void setDebug(bool debug);
     int rotaryPosition;
     bool buttonTriggered;
     bool longPress;
@@ -23,8 +24,12 @@ class Encoder {
     bool antiClockwiseDetected;
 
    private:
-    void increasePosition();
-    void decreasePosition();
+    void handleClockwise();
+    void handleAnticlockwise();
+    void debugLog(String message);
+    void handleButtonReleased(long currentTime);
+    bool encoderButtonDown();
+    bool triggerTimeElapsed(long currentTime);
     int _longPressTime = 700;
     int _doublePressTime = 300;
     int _maxPosition = 255;
@@ -33,9 +38,10 @@ class Encoder {
     int _pinClk;
     int _pinDt;
     int _pinSw;
-    bool _buttonDown;
-    long _buttonDownTime;
+    bool _debug;
+    bool _buttonDownRecorded;
     bool _triggerPending;
+    long _buttonDownTime;
     long _triggerPendingTime;
     int _clkState;
     int _prevClkState;

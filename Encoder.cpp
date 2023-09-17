@@ -18,33 +18,21 @@ void Encoder::begin() {
 
 void Encoder::updateButtonState() {
     long currentTime = millis();
-    if (!(digitalRead(_pinSw)) && !_buttonDown) {
-        _buttonDown = true;
-        _buttonDownTime = millis();
-        Serial.println("Button down!");
-    } else if (digitalRead(_pinSw) && _buttonDown) {
-        _buttonDown = false;
-        if (currentTime > _buttonDownTime + _longPressTime) {
-            if (_triggerPending) {
-                clickAndHold = true;
-                _triggerPending = false;
-            } else {
-                longPress = true;
-            }
-        } else {
-            if (_triggerPending && currentTime < _triggerPendingTime + _doublePressTime) {
-                _triggerPending = false;
-                doublePress = true;
-            } else if (!_triggerPending) {
-                _triggerPending = true;
-                _triggerPendingTime = millis();
-            }
+
+    if (_buttonDownRecorded) {
+        if (!encoderButtonDown()) {
+            handleButtonReleased(currentTime);
         }
-        Serial.println("Button up!");
-    }
-    if (!_buttonDown && _triggerPending && currentTime > _triggerPendingTime + _doublePressTime) {
-        buttonTriggered = true;
-        _triggerPending = false;
+    } else {
+        if (triggerTimeElapsed(currentTime)) {
+            buttonTriggered = true;
+            _triggerPending = false;
+        }
+        if (encoderButtonDown()) {
+            _buttonDownRecorded = true;
+            _buttonDownTime = currentTime;
+            debugLog("Button down!");
+        }
     }
 }
 
@@ -52,12 +40,11 @@ void Encoder::updateRotaryPosition() {
     _clkState = digitalRead(_pinClk);
     if (_clkState != _prevClkState) {
         if (digitalRead(_pinDt) == _clkState) {
-            increasePosition();
+            handleClockwise();
         } else {
-            decreasePosition();
+            handleAnticlockwise();
         }
-        Serial.print("Position: ");
-        Serial.println(rotaryPosition);
+        debugLog("Position: " + String(rotaryPosition));
     }
     _prevClkState = _clkState;
 }
@@ -67,12 +54,51 @@ void Encoder::setButtonTimes(int doublePressTime, int longPressTime) {
     _longPressTime = longPressTime;
 }
 
-void Encoder::increasePosition() {
+void Encoder::handleButtonReleased(long currentTime) {
+    _buttonDownRecorded = false;
+    if (currentTime > _buttonDownTime + _longPressTime) {
+        if (_triggerPending) {
+            clickAndHold = true;
+            _triggerPending = false;
+        } else {
+            longPress = true;
+        }
+    } else {
+        if (_triggerPending && currentTime < _triggerPendingTime + _doublePressTime) {
+            _triggerPending = false;
+            doublePress = true;
+        } else if (!_triggerPending) {
+            _triggerPending = true;
+            _triggerPendingTime = currentTime;
+        }
+    }
+    debugLog("Button up!");
+}
+
+void Encoder::setDebug(bool debug) {
+    _debug = debug;
+}
+
+void Encoder::handleClockwise() {
     rotaryPosition = min(rotaryPosition + _sensitivity, _maxPosition);
     clockwiseDetected = true;
 }
 
-void Encoder::decreasePosition() {
+void Encoder::handleAnticlockwise() {
     rotaryPosition = max(rotaryPosition - _sensitivity, _minPosition);
     antiClockwiseDetected = true;
+}
+
+void Encoder::debugLog(String message) {
+    if (_debug) {
+        Serial.println(message);
+    }
+}
+
+bool Encoder::encoderButtonDown() {
+    return !(digitalRead(_pinSw));
+}
+
+bool Encoder::triggerTimeElapsed(long currentTime) {
+    return _triggerPending && currentTime > _triggerPendingTime + _doublePressTime;
 }
