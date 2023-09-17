@@ -5,12 +5,10 @@
 */
 #ifndef Encoder_h
 #define Encoder_h
-
 #include "Arduino.h"
 
-class Encoder
-{
-public:
+class Encoder {
+   public:
     Encoder(int pinCLK, int pinDT, int pinSW);
     void begin();
     void updateButtonState();
@@ -24,7 +22,7 @@ public:
     bool clockwiseDetected;
     bool antiClockwiseDetected;
 
-private:
+   private:
     void increasePosition();
     void decreasePosition();
     int _longPressTime = 700;
