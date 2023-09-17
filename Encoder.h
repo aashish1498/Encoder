@@ -15,13 +15,13 @@ class Encoder {
     void updateRotaryPosition();
     void setButtonTimes(int doublePressTime, int longPressTime);
     void setDebug(bool debug);
+    bool checkSinglePress();
+    bool checkDoublePress();
+    bool checkLongPress();
+    bool checkPressAndHold();
+    bool checkClockwise();
+    bool checkAntiClockwise();
     int rotaryPosition;
-    bool buttonTriggered;
-    bool longPress;
-    bool doublePress;
-    bool clickAndHold;
-    bool clockwiseDetected;
-    bool antiClockwiseDetected;
 
    private:
     void handleClockwise();
@@ -39,13 +39,19 @@ class Encoder {
     int _pinClk;
     int _pinDt;
     int _pinSw;
+    int _clkState;
+    int _prevClkState;
     bool _debug;
     bool _buttonDownRecorded;
     bool _triggerPending;
+    bool _singlePress;
+    bool _doublePress;
+    bool _longPress;
+    bool _pressAndHold;
+    bool _clockwiseDetected;
+    bool _antiClockwiseDetected;
     long _buttonDownTime;
     long _triggerPendingTime;
-    int _clkState;
-    int _prevClkState;
 };
 
 #endif
