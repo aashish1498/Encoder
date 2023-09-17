@@ -11,10 +11,11 @@
 class Encoder
 {
 public:
-    Encoder(int PinCLK, int PinDT, int PinSW);
+    Encoder(int pinCLK, int pinDT, int pinSW);
     void begin();
     void updateButtonState();
     void updateRotaryPosition();
+    void setButtonTimes(int doublePressTime, int longPressTime);
     int rotaryPosition;
     bool buttonTriggered;
     bool longPress;
@@ -26,6 +27,10 @@ public:
 private:
     void increasePosition();
     void decreasePosition();
+    int _longPressTime = 700;
+    int _doublePressTime = 300;
+    int _maxPosition = 255;
+    int _minPosition = 0;
     int _pinClk;
     int _pinDt;
     int _pinSw;

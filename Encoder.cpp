@@ -1,35 +1,11 @@
 #include "Arduino.h"
 #include "Encoder.h"
 
-const int LONG_PRESS_TIME = 700;
-const int DOUBLE_PRESS_TIME = 300;
-
-int maxPosition = 255;
-int minPosition = 0;
-
-// bool _buttonDown = false;
-// long _buttonDownTime = 0;
-
-// bool _triggerPending = false;
-// long _triggerPendingTime = 0;
-
-bool buttonTriggered = false;
-bool longPress = false;
-bool doublePress = false;
-bool clickAndHold = false;
-bool clockwiseDetected = false;
-bool antiClockwiseDetected = false;
-
-// int rotaryPosition = 0;
-
-int _clkState;
-int _prevClkState;
-
-Encoder::Encoder(int PinCLK, int PinDT, int PinSW)
+Encoder::Encoder(int pinCLK, int pinDT, int pinSW)
 {
-    _pinClk = PinCLK;
-    _pinDt = PinDT;
-    _pinSw = PinSW;
+    _pinClk = pinCLK;
+    _pinDt = pinDT;
+    _pinSw = pinSW;
 }
 
 void Encoder::begin() {
@@ -38,8 +14,6 @@ void Encoder::begin() {
     pinMode(_pinSw, INPUT);
     _prevClkState = digitalRead(_pinClk);
     digitalWrite(_pinSw, HIGH); // Pull-Up resistor for switch
-    
-    maxPosition = 255;
 }
 
 void Encoder::updateButtonState()
@@ -54,7 +28,7 @@ void Encoder::updateButtonState()
     else if (digitalRead(_pinSw) && _buttonDown)
     {
         _buttonDown = false;
-        if (currentTime > _buttonDownTime + LONG_PRESS_TIME)
+        if (currentTime > _buttonDownTime + _longPressTime)
         {
             if (_triggerPending)
             {
@@ -68,7 +42,7 @@ void Encoder::updateButtonState()
         }
         else
         {
-            if (_triggerPending && currentTime < _triggerPendingTime + DOUBLE_PRESS_TIME)
+            if (_triggerPending && currentTime < _triggerPendingTime + _doublePressTime)
             {
                 _triggerPending = false;
                 doublePress = true;
@@ -81,12 +55,11 @@ void Encoder::updateButtonState()
         }
         Serial.println("Button up!");
     }
-    if (!_buttonDown && _triggerPending && currentTime > _triggerPendingTime + DOUBLE_PRESS_TIME)
+    if (!_buttonDown && _triggerPending && currentTime > _triggerPendingTime + _doublePressTime)
     {
         buttonTriggered = true;
         _triggerPending = false;
     }
-    // delay(4);
 }
 
 void Encoder::updateRotaryPosition()
@@ -94,7 +67,6 @@ void Encoder::updateRotaryPosition()
     _clkState = digitalRead(_pinClk);
     if (_clkState != _prevClkState)
     {
-        // If the outputB state is different to the outputA state, that means the encoder is rotating clockwise(?)
         if (digitalRead(_pinDt) == _clkState)
         {
             increasePosition();
@@ -106,18 +78,23 @@ void Encoder::updateRotaryPosition()
         Serial.print("Position: ");
         Serial.println(rotaryPosition);
     }
-    _prevClkState = _clkState; // Updates the previous state of the outputA with the current state
-                               // delay(40);
+    _prevClkState = _clkState; 
+}
+
+void Encoder::setButtonTimes(int doublePressTime, int longPressTime)
+{
+    _doublePressTime = doublePressTime;
+    _longPressTime = longPressTime;
 }
 
 void Encoder::increasePosition()
 {
-    rotaryPosition = min(rotaryPosition + _sensitivity, maxPosition);
+    rotaryPosition = min(rotaryPosition + _sensitivity, _maxPosition);
     clockwiseDetected = true;
 }
 
 void Encoder::decreasePosition()
 {
-    rotaryPosition = max(rotaryPosition - _sensitivity, minPosition);
+    rotaryPosition = max(rotaryPosition - _sensitivity, _minPosition);
     antiClockwiseDetected = true;
 }
