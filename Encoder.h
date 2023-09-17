@@ -28,6 +28,7 @@ class Encoder {
     void handleAnticlockwise();
     void debugLog(String message);
     void handleButtonReleased(long currentTime);
+    void handleLongPressRelease();
     bool encoderButtonDown();
     bool triggerTimeElapsed(long currentTime);
     int _longPressTime = 700;

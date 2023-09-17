@@ -16,9 +16,17 @@ void Encoder::begin() {
     digitalWrite(_pinSw, HIGH);
 }
 
+void Encoder::setButtonTimes(int doublePressTime, int longPressTime) {
+    _doublePressTime = doublePressTime;
+    _longPressTime = longPressTime;
+}
+
+void Encoder::setDebug(bool debug) {
+    _debug = debug;
+}
+
 void Encoder::updateButtonState() {
     long currentTime = millis();
-
     if (_buttonDownRecorded) {
         if (!encoderButtonDown()) {
             handleButtonReleased(currentTime);
@@ -49,20 +57,10 @@ void Encoder::updateRotaryPosition() {
     _prevClkState = _clkState;
 }
 
-void Encoder::setButtonTimes(int doublePressTime, int longPressTime) {
-    _doublePressTime = doublePressTime;
-    _longPressTime = longPressTime;
-}
-
 void Encoder::handleButtonReleased(long currentTime) {
     _buttonDownRecorded = false;
     if (currentTime > _buttonDownTime + _longPressTime) {
-        if (_triggerPending) {
-            clickAndHold = true;
-            _triggerPending = false;
-        } else {
-            longPress = true;
-        }
+        handleLongPressRelease();
     } else {
         if (_triggerPending && currentTime < _triggerPendingTime + _doublePressTime) {
             _triggerPending = false;
@@ -75,8 +73,13 @@ void Encoder::handleButtonReleased(long currentTime) {
     debugLog("Button up!");
 }
 
-void Encoder::setDebug(bool debug) {
-    _debug = debug;
+void Encoder::handleLongPressRelease() {
+    if (_triggerPending) {
+        clickAndHold = true;
+        _triggerPending = false;
+    } else {
+        longPress = true;
+    }
 }
 
 void Encoder::handleClockwise() {
