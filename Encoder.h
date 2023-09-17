@@ -31,6 +31,7 @@ private:
     int _doublePressTime = 300;
     int _maxPosition = 255;
     int _minPosition = 0;
+    int _sensitivity = 3;
     int _pinClk;
     int _pinDt;
     int _pinSw;
@@ -38,7 +39,6 @@ private:
     long _buttonDownTime;
     bool _triggerPending;
     long _triggerPendingTime;
-    int _sensitivity = 3;
     int _clkState;
     int _prevClkState;
 };
