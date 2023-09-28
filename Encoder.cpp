@@ -2,17 +2,32 @@
 
 #include "Arduino.h"
 
+static int8_t rot_enc_table[] = {0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0};
+static uint8_t prevNextCode = 0;
+static uint16_t store = 0;
+
 Encoder::Encoder(int pinCLK, int pinDT, int pinSW) {
     _pinClk = pinCLK;
     _pinDt = pinDT;
     _pinSw = pinSW;
 }
 
-void Encoder::begin() {
+void Encoder::beginBreakout() {
+    _isThreePin = false;
     pinMode(_pinClk, INPUT);
     pinMode(_pinDt, INPUT);
     pinMode(_pinSw, INPUT);
     _prevClkState = digitalRead(_pinClk);
+    digitalWrite(_pinSw, HIGH);
+}
+
+void Encoder::beginThreePin() {
+    _isThreePin = true;
+    pinMode(_pinClk, INPUT);
+    pinMode(_pinClk, INPUT_PULLUP);
+    pinMode(_pinDt, INPUT);
+    pinMode(_pinDt, INPUT_PULLUP);
+
     digitalWrite(_pinSw, HIGH);
 }
 
@@ -81,16 +96,11 @@ void Encoder::updateButtonState() {
 }
 
 void Encoder::updateRotaryPosition() {
-    _clkState = digitalRead(_pinClk);
-    if (_clkState != _prevClkState) {
-        if (digitalRead(_pinDt) == _clkState) {
-            handleClockwise();
-        } else {
-            handleAnticlockwise();
-        }
-        debugLog("Position: " + String(rotaryPosition));
+    if (_isThreePin) {
+        updateRotaryPositionThreePin();
+    } else {
+        updateRotaryPositionBreakout();
     }
-    _prevClkState = _clkState;
 }
 
 void Encoder::handleButtonReleased(long currentTime) {
@@ -140,4 +150,47 @@ bool Encoder::encoderButtonDown() {
 
 bool Encoder::triggerTimeElapsed(long currentTime) {
     return _triggerPending && currentTime > _triggerPendingTime + _doublePressTime;
+}
+
+void Encoder::updateRotaryPositionBreakout() {
+    _clkState = digitalRead(_pinClk);
+    if (_clkState != _prevClkState) {
+        if (digitalRead(_pinDt) == _clkState) {
+            handleClockwise();
+        } else {
+            handleAnticlockwise();
+        }
+        debugLog("Position: " + String(rotaryPosition));
+    }
+    _prevClkState = _clkState;
+}
+
+void Encoder::updateRotaryPositionThreePin() {
+    static int8_t val;
+    if (val = readRotaryThreePin()) {
+        if (prevNextCode == 0x0b) {
+            handleAnticlockwise();
+        }
+        if (prevNextCode == 0x07) {
+            handleClockwise();
+        }
+    }
+}
+
+int8_t Encoder::readRotaryThreePin() {
+    prevNextCode <<= 2;
+    if (digitalRead(_pinDt)) prevNextCode |= 0x02;
+    if (digitalRead(_pinClk)) prevNextCode |= 0x01;
+    prevNextCode &= 0x0f;
+
+    // If valid then store as 16 bit data.
+    if (rot_enc_table[prevNextCode]) {
+        store <<= 4;
+        store |= prevNextCode;
+        // if (store==0xd42b) return 1;
+        // if (store==0xe817) return -1;
+        if ((store & 0xff) == 0x2b) return -1;
+        if ((store & 0xff) == 0x17) return 1;
+    }
+    return 0;
 }

@@ -10,7 +10,8 @@
 class Encoder {
    public:
     Encoder(int pinCLK, int pinDT, int pinSW);
-    void begin();
+    void beginBreakout();
+    void beginThreePin();
     void updateButtonState();
     void updateRotaryPosition();
     void setButtonTimes(int doublePressTime, int longPressTime);
@@ -31,6 +32,9 @@ class Encoder {
     void handleLongPressRelease();
     bool encoderButtonDown();
     bool triggerTimeElapsed(long currentTime);
+    void updateRotaryPositionBreakout();
+    void updateRotaryPositionThreePin();
+    int8_t readRotaryThreePin();
     int _longPressTime = 700;
     int _doublePressTime = 300;
     int _maxPosition = 255;
@@ -49,6 +53,7 @@ class Encoder {
     bool _longPress;
     bool _pressAndHold;
     bool _clockwiseDetected;
+    bool _isThreePin;
     bool _antiClockwiseDetected;
     long _buttonDownTime;
     long _triggerPendingTime;
